@@ -5,12 +5,25 @@ using Univ.Data;
 using Univ.Service.Dtos;
 using Univ.Service.Services.Implementations;
 using Univ.Service.Services.Interfaces;
+using Univ.API.Middlewares;
+using Microsoft.AspNetCore.Mvc;
+using Univ.Service.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+
+        var errors = context.ModelState.Where(x => x.Value.Errors.Count > 0)
+        .Select(x => new RestExceptionError(x.Key, x.Value.Errors.First().ErrorMessage)).ToList();
+
+        return new BadRequestObjectResult(new { message = "", errors });
+    };
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -40,5 +53,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.UseMiddleware<ExceptionHandlerMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
 app.Run();

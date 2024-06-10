@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Univ.Core.Entities;
 using Univ.Data;
 using Univ.Service.Dtos;
+using Univ.Service.Exceptions;
 using Univ.Service.Services.Interfaces;
 
 namespace Univ.Service.Services.Implementations
@@ -28,10 +29,13 @@ namespace Univ.Service.Services.Implementations
             Group group = _context.Groups.Include(x => x.Students).FirstOrDefault(x => x.Id == createDto.GroupId && !x.IsDeleted);
 
             if (group == null)
-                throw new Exception();
+                throw new RestException(StatusCodes.Status404NotFound, "GroupId", "Group not found by given GroupId");
+
+            if (group.Limit <= group.Students.Count)
+                throw new RestException(StatusCodes.Status400BadRequest, "Group limit reached");
 
             if (_context.Students.Any(x => x.Email.ToUpper() == createDto.Email.ToUpper() && !x.IsDeleted))
-                throw new Exception();
+                throw new RestException(StatusCodes.Status400BadRequest, "Email", "Student already exists by given Email");
 
 
 
@@ -51,7 +55,7 @@ namespace Univ.Service.Services.Implementations
 
         public List<StudentGetDto> GetAll()
         {
-            return _context.Students.Select(x => new StudentGetDto
+            return _context.Students.Where(x=> !x.IsDeleted).Select(x => new StudentGetDto
             {
                 Id = x.Id,
                 Fullname = x.Fullname,

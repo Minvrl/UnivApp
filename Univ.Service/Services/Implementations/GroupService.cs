@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,12 +22,13 @@ namespace Univ.Service.Services.Implementations
 
         public int Create(GroupCreateDto dto)
         {
-            if (_context.Groups.Any(x => x.No == dto.No))
+            if (_context.Groups.Any(x => x.No == dto.No && !x.IsDeleted))
                 throw new Exception();
 
             Group entity = new Group
             {
-                No = dto.No
+                No = dto.No,
+                Limit = dto.Limit,
             };
 
             _context.Groups.Add(entity);
@@ -36,10 +38,11 @@ namespace Univ.Service.Services.Implementations
 
         public List<GroupGetDto> GetAll()
         {
-            return _context.Groups.Select(x => new GroupGetDto
+            return _context.Groups.Where(x=> !x.IsDeleted).Select(x => new GroupGetDto
             {
                 Id = x.Id,
-                No = x.No
+                No = x.No,
+                Limit = x.Limit,
             }).ToList();
         }
     }

@@ -10,6 +10,7 @@ namespace Univ.Service.Dtos
     public class GroupCreateDto
     {
         public string No { get; set; }
+        public byte Limit { get; set; }
     }
 
     public class GroupCreateDtoValidator : AbstractValidator<GroupCreateDto>
